@@ -3,7 +3,7 @@ use super::dialogs;
 use super::{VectorcraftApp, browsable_url};
 
 impl VectorcraftApp {
-    /// Open a link in the browser (Help → Discord, website, GitHub…).
+    /// Open a link in the browser.
     pub fn open_url(&mut self, url: &str) {
         match self.services.open_url.as_mut() {
             Some(open) => open(url),
@@ -28,16 +28,6 @@ impl VectorcraftApp {
             return Err(format!("{id} opens another app: only the person at the keyboard can run it"));
         }
         Ok(())
-    }
-
-    /// Run a Help link command and open the URL it returns.
-    pub fn open_link(&mut self, id: &str) {
-        if let Ok(v) = self.run(id, serde_json::json!({}))
-            && let Some(u) = v["url"].as_str()
-        {
-            let u = u.to_string();
-            self.open_url(&u);
-        }
     }
 
     /// Linked files another app changed while their document is open: every two seconds, and as

@@ -227,8 +227,6 @@ font-technology	Variable	Değişken
 	Artboard {number}	Çalışma yüzeyi {number}
 	Artboard:	Çalışma yüzeyi:
 	Artboards	Çalışma Yüzeyleri
-	ArtCraft Website	ArtCraft Web Sitesi
-	ArtCraft website	ArtCraft web sitesi
 	Artwork Colors	Sanat Eseri Renkleri
 	As Multiple Assets	Çoklu Varlıklar Olarak
 	As Single Asset	Tek Varlık Olarak
@@ -777,7 +775,6 @@ font-technology	Variable	Değişken
 	Discard Recovered Documents	Kurtarılan Belgeleri Atın
 	Discard White Overprint in Output	Çıktıdaki Beyaz Üst Baskıyı At
 	Discarded {} recovered document(s)	Kurtarılan {} belge atıldı
-	Discord	Discord
 	Discretionary Hyphen	İsteğe Bağlı Kısa Çizgi
 	Discretionary Ligatures	İsteğe Bağlı Bitişik Harfler
 	Display All Blacks Accurately	Tüm Siyahları Doğru Şekilde Görüntüleyin
@@ -1464,9 +1461,6 @@ font-technology	Variable	Değişken
 	Italian	İtalyan
 	Japanese	Japonca
 	Join	Katıl
-	Join Our Discord	Discord'umuza Katılın
-	Join our Discord	Discord'umuza katılın
-	Join the ArtCraft community on Discord (discord.gg/artcraft)	Discord'daki ArtCraft topluluğuna katılın (discord.gg/artcraft)
 	Join the lines of each paragraph	Her paragrafın satırlarını birleştirin
 	Join Tool	Birleştirme Aracı
 	Justification…	İki Yana Yaslama…
@@ -2122,7 +2116,6 @@ shape	Open	Açık
 	Paragraph Style Options	Paragraf Stili Seçenekleri
 	Paragraph Styles	Paragraf Stilleri
 	Paragraph Symbol	Paragraf Sembolü
-	Part of ArtCraft. MIT OR Apache-2.0. Fonts: Source Sans 3, Inter, JetBrains Mono (OFL). Icons: Lucide (ISC) + VectorCraft.	ArtCraft'ın bir parçası. MIT VEYA Apache-2.0. Yazı Tipleri: Source Sans 3, Inter, JetBrains Mono (OFL). Simgeler: Lucide (ISC) + VectorCraft.
 	Password	Şifre
 	Paste	Yapıştır
 	Paste in Back	Arkaya Yapıştır
@@ -3016,7 +3009,6 @@ digits	Malayalam	Malayalam
 	Sort by Kind	Türe göre sırala
 	Sort by Name	Ada Göre Sırala
 	Sort by Status	Duruma göre sırala
-	Source code on GitHub	GitHub'daki kaynak kodu
 	Source Sans 3	Kaynak Sans 3
 	Space After Paragraph	Paragraftan Sonra Boşluk
 	Space Before Paragraph	Paragraftan Önce Boşluk
@@ -3446,8 +3438,6 @@ digits	Malayalam	Malayalam
 	Vector illustration — fast, open, scriptable.	Vektör illüstrasyonu — hızlı, açık, yazılabilir.
 	VectorCraft didn't quit normally last time. These documents had unsaved changes:	VectorCraft geçen sefer normal şekilde kapanmamıştı. Bu belgelerde kaydedilmemiş değişiklikler vardı:
 	VectorCraft Help…	VectorCraft Yardımı…
-	VectorCraft on getartcraft.com	Getartcraft.com'da VectorCraft
-	VectorCraft on GitHub	GitHub'da VectorCraft
 	Vectors	Vektörler
 	Version {version} — open-source vector illustration in pure Rust.	Sürüm {version} — saf Rust'ta açık kaynaklı vektör çizimi.
 	Version:	Sürüm:
@@ -4861,7 +4851,6 @@ lighting	Light	Işık
 	PDF/X-4:2010	PDF/X-4:2010
 	PRs	PR'ler
 	Page Cover 1640×624	Sayfa Kapağı 1640×624
-	Part of ArtCraft. MIT OR Apache-2.0. Fonts: Source Sans 3, Inter, JetBrains Mono, Noto Sans SC (OFL). Icons: Lucide (ISC) + VectorCraft.	ArtCraft'ın bir parçası. MIT VEYA Apache-2.0. Yazı Tipleri: Source Sans 3, Inter, JetBrains Mono, Noto Sans SC (OFL). Simgeler: Lucide (ISC) + VectorCraft.
 	Pattern Swatches	Desen Örnekleri
 	Pen	Kalem
 	Pentagram	Pentagram

@@ -350,8 +350,7 @@ pub fn entries() -> &'static [Entry] {
             } else {
                 true
             };
-            // Al Majlis Vector: no community or website links (brand licence).
-            if !listed || crate::community::HIDDEN_COMMANDS.contains(&c.id) || !seen.insert(c.id) {
+            if !listed || !seen.insert(c.id) {
                 continue;
             }
             let group = if c.menu.is_empty() { id_group(c.id) } else { c.menu.join(" › ") };
