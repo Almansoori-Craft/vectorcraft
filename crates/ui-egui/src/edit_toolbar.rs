@@ -536,10 +536,14 @@ fn show_button(ui: &mut Ui, t: &Tokens, name: &str, label: &str, icon: &str, on:
     let (r, resp) = ui.allocate_exact_size(vec2(26.0, 26.0), Sense::click());
     resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::CheckBox, true, on, tl!(label)));
     let p = ui.painter();
+    let cr = t.corner(t.tool_radius, 3);
     if on {
-        p.rect_filled(r, 3.0, t.tool_active);
+        p.rect_filled(r, cr, t.tool_active);
+        if t.majlis {
+            p.rect_stroke(r, cr, Stroke::new(1.0, t.accent), StrokeKind::Inside);
+        }
     } else if resp.hovered() {
-        p.rect_filled(r, 3.0, t.hover);
+        p.rect_filled(r, cr, t.hover);
     }
     let ink = if on { t.text_strong } else { t.icon };
     let c = r.center();

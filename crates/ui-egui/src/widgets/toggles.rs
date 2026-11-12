@@ -9,10 +9,14 @@ fn choice_row(ui: &mut Ui, text: &str, enabled: bool) -> (Rect, Response, Color3
         ui.allocate_exact_size(vec2(18.0 + galley.size().x, 20.0f32.max(galley.size().y)), if enabled { Sense::click() } else { Sense::hover() });
     let bx = Rect::from_min_size(pos2(rect.left(), rect.center().y - 6.5), Vec2::splat(13.0));
     ui.painter().galley(pos2(bx.right() + 5.0, rect.center().y - galley.size().y / 2.0), galley, t.text);
+    // Al Majlis: the hairline all but vanishes on the raised box, so a resting box takes the muted
+    // text colour.
     let border = if !enabled {
         t.divider
     } else if resp.hovered() {
         t.text
+    } else if t.majlis {
+        t.text_muted
     } else {
         t.button_border
     };

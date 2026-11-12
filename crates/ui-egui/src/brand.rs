@@ -1,8 +1,12 @@
-//! The VectorCraft brand mark: the app icon (the engraved dragon, `assets/app-icon/`, see its
-//! README). The PNG carries the icon's rounded corners; it is decoded once per context into a
-//! mipmapped texture, so it stays crisp from the 18 pt app-bar mark to the About box.
+//! The app's name and mark: the app icon (the engraved dragon, `assets/app-icon/`, see its
+//! README; Al Majlis' own icon comes later). The PNG carries the icon's rounded corners; it is
+//! decoded once per context into a mipmapped texture, so it stays crisp from the 18 pt app-bar
+//! mark to the About box. No ArtCraft logo or wordmark is drawn.
 
 use egui::{Color32, Context, Id, Rect, TextureHandle, TextureOptions, Ui, pos2};
+
+/// The name the app shows: window title, app bar, About, Home. Internal ids keep `vectorcraft`.
+pub const APP_NAME: &str = "Al Majlis Vector";
 
 /// 128 px: sharp at 44 pt on a 2× display, and the mipmaps keep 22 pt clean.
 const ICON_PNG: &[u8] = include_bytes!("../../../assets/app-icon/hicolor/128x128/apps/ai.storyteller.vectorcraft.png");

@@ -1,11 +1,21 @@
 //! Community and project links: the Discord button (header, About, Home) and the link list.
 //! Icons are Lucide's (ISC); Discord's own logo is a trademark, so the button uses a chat icon
 //! on Discord's colour with the word "Discord".
+//!
+//! Al Majlis Vector hides all of them ([`SHOWN`]): a modified version must not show the ArtCraft
+//! name, website or community (docs/brand/LICENSE-brand.txt). The `help.*` link commands stay for
+//! scripts, out of the menus and the command palette ([`HIDDEN_COMMANDS`]).
 
 use egui::{Color32, CornerRadius, Sense, Ui, vec2};
 
 use crate::theme::{self, Tokens};
 use crate::{VectorcraftApp, icons};
+
+/// Whether the community links and the Discord button show anywhere (never in Al Majlis Vector).
+pub const SHOWN: bool = false;
+
+/// The link commands kept out of the menus and the command palette.
+pub const HIDDEN_COMMANDS: [&str; 4] = ["help.discord", "help.website", "help.appPage", "help.github"];
 
 /// Discord's brand colour (a colour, not a logo).
 const DISCORD: Color32 = Color32::from_rgb(0x58, 0x65, 0xF2);
@@ -62,8 +72,11 @@ fn link(app: &mut VectorcraftApp, ui: &mut Ui, icon: &str, label: &str, cmd: &st
     });
 }
 
-/// The Discord button and the website / app page / GitHub links.
+/// The Discord button and the website / app page / GitHub links; nothing unless [`SHOWN`].
 pub fn links(app: &mut VectorcraftApp, ui: &mut Ui) {
+    if !SHOWN {
+        return;
+    }
     discord_button(app, ui, true);
     ui.add_space(8.0);
     let l = app.session.execute("help.links", &serde_json::json!({})).unwrap_or_default();

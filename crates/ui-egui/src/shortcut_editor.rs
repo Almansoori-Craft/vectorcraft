@@ -350,7 +350,8 @@ pub fn entries() -> &'static [Entry] {
             } else {
                 true
             };
-            if !listed || !seen.insert(c.id) {
+            // Al Majlis Vector: no community or website links (brand licence).
+            if !listed || crate::community::HIDDEN_COMMANDS.contains(&c.id) || !seen.insert(c.id) {
                 continue;
             }
             let group = if c.menu.is_empty() { id_group(c.id) } else { c.menu.join(" › ") };
@@ -581,7 +582,7 @@ pub fn export_json(set: &str, overrides: &Overrides) -> Value {
 }
 
 pub fn import_json(v: &Value) -> Result<(String, Overrides), String> {
-    let o = v.get("overrides").and_then(Value::as_object).ok_or("not a VectorCraft shortcut set (missing `overrides`)")?;
+    let o = v.get("overrides").and_then(Value::as_object).ok_or("not an Al Majlis Vector shortcut set (missing `overrides`)")?;
     let mut out = Overrides::new();
     for (k, v) in o {
         let s = v.as_str().ok_or_else(|| format!("shortcut for `{k}` must be a string"))?;
@@ -677,7 +678,7 @@ pub fn run_command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<Resu
             let bytes = serde_json::to_vec_pretty(&v).unwrap_or_default();
             let pick = crate::FilePick {
                 filters: vec![crate::FilePick::filter("Shortcut sets", &["json"])],
-                ..crate::FilePick::named("VectorCraft Shortcuts.json")
+                ..crate::FilePick::named("Al Majlis Vector Shortcuts.json")
             };
             let path = s("path").or_else(|| crate::picks::save(app, &pick));
             match path {
@@ -688,7 +689,7 @@ pub fn run_command(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<Resu
                 // Its save dialog is open: the file is written when it answers.
                 None if app.file_dialog_open() => Err("cancelled".into()),
                 None => match app.services.download.as_mut() {
-                    Some(dl) => dl("VectorCraft Shortcuts.json", &bytes).map(|()| Value::Null),
+                    Some(dl) => dl("Al Majlis Vector Shortcuts.json", &bytes).map(|()| Value::Null),
                     None => Ok(v),
                 },
             }
@@ -825,8 +826,12 @@ pub fn show(app: &mut VectorcraftApp, ctx: &egui::Context) {
                 opts.push(CUSTOM);
             }
             // The sets listed are ours (translated); a set read from an imported file shows
-            // its name as it is.
-            if let Some(&name) = crate::dialogs::mixed_dropdown(ui, "kbset", &cur, &opts, 200.0, |_| true).and_then(|i| opts.get(i))
+            // its name as it is. The default set keeps its stored name (`PRESETS[0]`, saved in
+            // preferences) but shows as Al Majlis Vector's.
+            let show = |n: &str| if n == PRESETS[0] { "Al Majlis Vector Defaults".to_string() } else { n.to_string() };
+            let shown: Vec<String> = opts.iter().map(|o| show(o)).collect();
+            let shown: Vec<&str> = shown.iter().map(String::as_str).collect();
+            if let Some(&name) = crate::dialogs::mixed_dropdown(ui, "kbset", &show(&cur), &shown, 200.0, |_| true).and_then(|i| opts.get(i))
                 && let Some(p) = preset(name)
             {
                 km.to_mut().set_overrides(p);

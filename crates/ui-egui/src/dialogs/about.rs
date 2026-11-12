@@ -1,4 +1,4 @@
-//! Help → About VectorCraft.
+//! Help → About Al Majlis Vector.
 
 use crate::VectorcraftApp;
 use crate::theme;
@@ -9,7 +9,7 @@ pub(super) fn show(app: &mut VectorcraftApp, ctx: &egui::Context) {
         return;
     }
     let mut open = true;
-    egui::Window::new(tl!("About VectorCraft"))
+    egui::Window::new(tl!("About Al Majlis Vector"))
         .collapsible(false)
         .resizable(false)
         .open(&mut open)
@@ -45,29 +45,22 @@ pub(super) fn show(app: &mut VectorcraftApp, ctx: &egui::Context) {
     app.ui.about = open;
 }
 
-/// The About tab: mark, version, community links, licences and the GPU in use.
+/// The About tab: mark, name, version, where it comes from (the one plain line the brand licence
+/// allows a modified version, MAJLIS_LOOK.md › Branding), licences and the GPU in use.
 fn about_tab(app: &mut VectorcraftApp, ui: &mut egui::Ui) {
     ui.set_width(380.0);
     ui.horizontal(|ui| {
         let (r, _) = ui.allocate_exact_size(egui::vec2(44.0, 44.0), egui::Sense::hover());
         crate::brand::paint_mark(ui, r);
         ui.vertical(|ui| {
-            ui.label(egui::RichText::new("VectorCraft").font(theme::semibold(22.0)));
-            ui.label(crate::i18n::fmt(
-                tl!("Version {version} — open-source vector illustration in pure Rust."),
-                &[("version", env!("CARGO_PKG_VERSION"))],
-            ));
+            ui.label(egui::RichText::new(crate::brand::APP_NAME).font(theme::semibold(22.0)));
+            ui.label(crate::i18n::fmt(tl!("Version {version}"), &[("version", env!("CARGO_PKG_VERSION"))]));
         });
     });
     ui.add_space(12.0);
-    crate::community::links(app, ui);
-    ui.add_space(12.0);
-    ui.label(
-        egui::RichText::new(tl!(
-            "Part of ArtCraft. MIT OR Apache-2.0. Fonts: Source Sans 3, Inter, JetBrains Mono (OFL). Icons: Lucide (ISC) + VectorCraft."
-        ))
-        .size(11.0),
-    );
+    ui.label("Based on VectorCraft by the ArtCraft team (MIT OR Apache-2.0).");
+    ui.add_space(8.0);
+    ui.label(egui::RichText::new(tl!("Fonts: Source Sans 3, Inter, JetBrains Mono (OFL). Icons: Lucide (ISC).")).size(11.0));
     // The GPU the window renders with, for bug reports (Preferences › Performance picks it).
     if let Some(adapter) = &app.graphics_adapter {
         ui.add_space(6.0);

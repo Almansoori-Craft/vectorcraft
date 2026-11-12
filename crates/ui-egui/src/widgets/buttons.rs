@@ -18,7 +18,12 @@ pub fn paint_icon_button(ui: &mut Ui, resp: Response, icon: &str, tip: &str, sel
     } else {
         Color32::TRANSPARENT
     };
-    ui.painter().rect_filled(rect, CornerRadius::same(5), bg);
+    let cr = t.corner(t.tool_radius, 5);
+    ui.painter().rect_filled(rect, cr, bg);
+    // Al Majlis: the selected one also has a 1 pt accent outline.
+    if selected && t.majlis {
+        ui.painter().rect_stroke(rect, cr, Stroke::new(1.0, t.accent), egui::StrokeKind::Inside);
+    }
     let pad = (size * 0.2).round();
     icons::paint(ui, icon, rect.shrink(pad), if selected { t.text_strong } else { t.icon });
     resp.widget_info(|| icon_button_info(ui.is_enabled(), selected, tl!(tip)));
@@ -30,11 +35,24 @@ pub fn flat_button(ui: &mut Ui, text: &str, width: f32) -> Response {
     let t = Tokens::get(ui.ctx());
     let (rect, resp) = ui.allocate_exact_size(vec2(width, 24.0), Sense::click());
     let rect = rect.shrink2(vec2(0.0, 0.5));
-    ui.painter().rect_filled(rect, CornerRadius::same(5), t.button);
-    flat_fill(ui, rect, &resp);
+    flat_face(ui, &t, rect);
+    flat_fill(ui, rect, &resp, flat_corner(&t));
     ui.painter().with_clip_rect(rect).text(rect.center(), egui::Align2::CENTER_CENTER, tl!(text), egui::FontId::proportional(12.5), t.text_strong);
     resp.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, ui.is_enabled(), tl!(text)));
     resp
+}
+
+/// The corner of a flat (secondary) text button: a pill in the Al Majlis look.
+fn flat_corner(t: &Tokens) -> CornerRadius {
+    t.corner(t.button_radius, 5)
+}
+
+/// A flat button's resting face: its fill, and in the Al Majlis look a 1 pt hairline.
+fn flat_face(ui: &Ui, t: &Tokens, rect: Rect) {
+    ui.painter().rect_filled(rect, flat_corner(t), t.button);
+    if t.majlis {
+        ui.painter().rect_stroke(rect, flat_corner(t), Stroke::new(1.0, t.hairline), egui::StrokeKind::Inside);
+    }
 }
 
 /// A [`flat_button`] that expands to fit localized labels wider than `min_width`.
@@ -44,8 +62,8 @@ pub fn flat_button_fit(ui: &mut Ui, text: &str, min_width: f32) -> Response {
     let width = (galley.size().x + 24.0).max(min_width);
     let (rect, resp) = ui.allocate_exact_size(vec2(width, 24.0), Sense::click());
     let rect = rect.shrink2(vec2(0.0, 0.5));
-    ui.painter().rect_filled(rect, CornerRadius::same(5), t.button);
-    flat_fill(ui, rect, &resp);
+    flat_face(ui, &t, rect);
+    flat_fill(ui, rect, &resp, flat_corner(&t));
     ui.painter().with_clip_rect(rect).text(rect.center(), egui::Align2::CENTER_CENTER, tl!(text), egui::FontId::proportional(12.5), t.text_strong);
     resp.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, ui.is_enabled(), tl!(text)));
     resp
@@ -71,10 +89,12 @@ pub fn split_button_named(ui: &mut Ui, text: &str, arrow_tip: &str, width: f32) 
     let arrow_rect = Rect::from_min_max(pos2(split, rect.top()), rect.max);
     let main = ui.interact(main_rect, ui.scope_id().with((text, "split")), Sense::click());
     let arrow = ui.interact(arrow_rect, ui.scope_id().with((text, "split-arrow")), Sense::click());
-    ui.painter().rect_filled(rect, CornerRadius::same(5), t.button);
-    flat_fill(ui, main_rect, &main);
-    flat_fill(ui, arrow_rect, &arrow);
-    ui.painter().vline(split, rect.y_range().shrink(5.0), Stroke::new(1.0, t.panel));
+    flat_face(ui, &t, rect);
+    // Each part lights up with the button's own corners on its outer side only.
+    let r = flat_corner(&t).nw;
+    flat_fill(ui, main_rect, &main, CornerRadius { nw: r, sw: r, ne: 0, se: 0 });
+    flat_fill(ui, arrow_rect, &arrow, CornerRadius { nw: 0, sw: 0, ne: r, se: r });
+    ui.painter().vline(split, rect.y_range().shrink(5.0), Stroke::new(1.0, if t.majlis { t.hairline } else { t.panel }));
     ui.painter().with_clip_rect(main_rect).text(
         main_rect.center(),
         egui::Align2::CENTER_CENTER,
@@ -91,13 +111,15 @@ pub fn split_button_named(ui: &mut Ui, text: &str, arrow_tip: &str, width: f32) 
     (main, arrow.on_hover_text(tl!(arrow_tip)))
 }
 
-/// The pressed or hovered fill of a flat button part.
-fn flat_fill(ui: &Ui, rect: Rect, resp: &Response) {
+/// The pressed or hovered fill of a flat button part, with corners `cr`.
+fn flat_fill(ui: &Ui, rect: Rect, resp: &Response, cr: CornerRadius) {
     let t = Tokens::get(ui.ctx());
+    // Al Majlis: the face is already the raised colour, so the pointer shows the pressed one.
+    let (down, over) = if t.majlis { (t.pressed, t.pressed) } else { (t.tool_active, t.hover) };
     if resp.is_pointer_button_down_on() {
-        ui.painter().rect_filled(rect, CornerRadius::same(5), t.tool_active);
+        ui.painter().rect_filled(rect, cr, down);
     } else if resp.hovered() {
-        ui.painter().rect_filled(rect, CornerRadius::same(5), t.hover);
+        ui.painter().rect_filled(rect, cr, over);
     }
 }
 
@@ -120,18 +142,20 @@ pub(crate) fn primary_button_width(ui: &mut Ui, text: &str, min_width: f32) -> R
 /// Returns its response with the enabled state and screen-reader name preserved.
 fn primary_button_sized(ui: &mut Ui, text: &str, enabled: bool, min_width: f32) -> Response {
     let t = Tokens::get(ui.ctx());
-    let fg = if enabled { Color32::WHITE } else { t.text_disabled };
+    let fg = if enabled { t.on_accent } else { t.text_disabled };
     let galley = ui.painter().layout_no_wrap(tl!(text).to_string(), theme::semibold(12.5), fg);
     let w = galley.size().x + 32.0;
     let (rect, resp) = ui.allocate_exact_size(vec2(w.max(min_width), 28.0), if enabled { Sense::click() } else { Sense::hover() });
     let bg = match (enabled, resp.hovered()) {
         (false, _) => t.input,
-        (true, true) => t.accent,
+        (true, true) => t.accent_hover,
         (true, false) => t.accent_strong,
     };
-    ui.painter().rect_filled(rect, CornerRadius::same(6), bg);
+    // Al Majlis: a pill.
+    let cr = t.corner(t.button_radius, 6);
+    ui.painter().rect_filled(rect, cr, bg);
     if !enabled {
-        ui.painter().rect_stroke(rect, CornerRadius::same(6), egui::Stroke::new(1.0, t.button_border), egui::StrokeKind::Inside);
+        ui.painter().rect_stroke(rect, cr, egui::Stroke::new(1.0, t.button_border), egui::StrokeKind::Inside);
     }
     ui.painter().galley(rect.center() - galley.size() / 2.0, galley, fg);
     resp.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, enabled && ui.is_enabled(), tl!(text)));
@@ -149,7 +173,13 @@ pub(crate) fn secondary_button_width(ui: &mut Ui, text: &str, min_width: f32) ->
     let galley = ui.painter().layout_no_wrap(tl!(text).to_string(), theme::semibold(12.5), t.text);
     let w = galley.size().x + 32.0;
     let (rect, resp) = ui.allocate_exact_size(vec2(w.max(min_width), 28.0), Sense::click());
-    ui.painter().rect_filled(rect, CornerRadius::same(6), if resp.hovered() { t.hover } else { t.button });
+    // Al Majlis: a pill, raised with a 1 pt hairline, pressed under the pointer.
+    let cr = t.corner(t.button_radius, 6);
+    let hover = if t.majlis { t.pressed } else { t.hover };
+    ui.painter().rect_filled(rect, cr, if resp.hovered() { hover } else { t.button });
+    if t.majlis {
+        ui.painter().rect_stroke(rect, cr, egui::Stroke::new(1.0, t.hairline), egui::StrokeKind::Inside);
+    }
     ui.painter().galley(rect.center() - galley.size() / 2.0, galley, t.text);
     resp.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, ui.is_enabled(), tl!(text)));
     resp

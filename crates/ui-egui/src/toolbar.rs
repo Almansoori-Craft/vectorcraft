@@ -7,7 +7,7 @@
 
 use std::sync::Arc;
 
-use egui::{Color32, CornerRadius, Sense, Stroke, Ui, pos2, vec2};
+use egui::{Color32, Sense, Stroke, Ui, pos2, vec2};
 use serde_json::{Value, json};
 use vectorcraft_color::Paint;
 use vectorcraft_tools::{Mods, TOOL_GROUPS, ToolInfo, ToolKey, tool_info};
@@ -226,11 +226,7 @@ fn body(app: &mut VectorcraftApp, ui: &mut Ui, cols: usize, floating: Option<egu
                     let is_active = slot.contains(&active);
                     let (rect, resp) = ui.allocate_exact_size(vec2(36.0, PITCH - 1.0), Sense::click_and_drag());
                     let well = egui::Rect::from_center_size(rect.center(), vec2(30.0, 27.5));
-                    if is_active {
-                        ui.painter().rect_filled(well, CornerRadius::same(6), t.tool_active);
-                    } else if resp.hovered() {
-                        ui.painter().rect_filled(well, CornerRadius::same(6), t.hover);
-                    }
+                    tool_well(ui, &t, well, is_active, resp.hovered());
                     let ir = egui::Rect::from_center_size(rect.center(), vec2(18.0, 18.0));
                     icons::paint(ui, icons::tool_icon(shown.icon), ir, if is_active { t.text_strong } else { t.icon });
                     if slot.len() > 1 {
@@ -723,18 +719,27 @@ fn grab_id(key: &str) -> egui::Id {
     bar_id(key).with("grab")
 }
 
+/// A tool button's well: the selected tool's (soft accent with a 1 pt accent outline in the Al
+/// Majlis look) or the one under the pointer, with the look's tool corner.
+fn tool_well(ui: &Ui, t: &Tokens, well: egui::Rect, selected: bool, hovered: bool) {
+    let cr = t.corner(t.tool_radius, 6);
+    if selected {
+        ui.painter().rect_filled(well, cr, t.tool_active);
+        if t.majlis {
+            ui.painter().rect_stroke(well, cr, Stroke::new(1.0, t.accent), egui::StrokeKind::Inside);
+        }
+    } else if hovered {
+        ui.painter().rect_filled(well, cr, t.hover);
+    }
+}
+
 /// One icon button per tool, the active one lit, with its name and shortcut on hover. Returns the
 /// tool clicked.
 fn tool_strip(ui: &mut Ui, t: &Tokens, active: &str, tools: &[String]) -> Option<&'static str> {
     let mut chosen = None;
     for tool in tools.iter().filter_map(|id| tool_info(id)) {
         let (r, resp) = ui.allocate_exact_size(STRIP_BUTTON, Sense::click());
-        let well = r.shrink(1.0);
-        if active == tool.id {
-            ui.painter().rect_filled(well, CornerRadius::same(6), t.tool_active);
-        } else if resp.hovered() {
-            ui.painter().rect_filled(well, CornerRadius::same(6), t.hover);
-        }
+        tool_well(ui, t, r.shrink(1.0), active == tool.id, resp.hovered());
         let ir = egui::Rect::from_center_size(r.center(), vec2(18.0, 18.0));
         icons::paint(ui, icons::tool_icon(tool.icon), ir, if active == tool.id { t.text_strong } else { t.icon });
         resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), active == tool.id, tip(tool)));

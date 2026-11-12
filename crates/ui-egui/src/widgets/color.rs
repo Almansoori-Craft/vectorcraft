@@ -424,7 +424,7 @@ pub fn hex_field_named(ui: &mut Ui, id: impl std::hash::Hash, name: Option<&str>
     let resp = egui::Frame::NONE
         .fill(t.input)
         .stroke(Stroke::new(1.0, if editing { t.accent } else { t.input_border }))
-        .corner_radius(5)
+        .corner_radius(t.corner(t.field_radius, 5))
         .inner_margin(egui::Margin::symmetric(6, 4))
         .show(ui, |ui| {
             // As tall as the other fields (26 points with the margin), whatever the font's line

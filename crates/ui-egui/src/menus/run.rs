@@ -514,7 +514,7 @@ fn run_ui_part6(app: &mut VectorcraftApp, id: &str, p: &Value) -> Option<Result<
                 app.canvas.key = None;
                 Ok(json!(b.id()))
             }
-            None => Err("brightness must be dark|mediumDark|mediumLight|light".into()),
+            None => Err("brightness must be majlisLight|majlisDark|dark|mediumDark|mediumLight|light".into()),
         },
         "window.newWindow" => Err("New Window isn't available yet: a document opens in one window".into()),
         "window.nextDocument" => crate::chrome::step_document(app, true),

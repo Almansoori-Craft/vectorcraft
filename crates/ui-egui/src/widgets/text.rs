@@ -352,7 +352,7 @@ pub fn search_field(ui: &mut Ui, id: egui::Id, hint: &str) -> String {
     egui::Frame::NONE
         .fill(t.input)
         .stroke(Stroke::new(1.0, t.input_border))
-        .corner_radius(egui::CornerRadius::same(2))
+        .corner_radius(t.corner(t.field_radius, 2))
         .inner_margin(egui::Margin::symmetric(8, 5))
         .show(ui, |ui| {
             ui.add(

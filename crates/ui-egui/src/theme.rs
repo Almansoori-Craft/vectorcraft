@@ -1,4 +1,5 @@
-//! Design tokens (four UI brightness levels), fonts and egui style.
+//! Design tokens (four UI brightness levels plus the Al Majlis light and dark looks), fonts and
+//! egui style.
 
 use std::sync::Arc;
 
@@ -8,20 +9,34 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Brightness {
     Dark,
-    #[default]
     MediumDark,
     MediumLight,
     Light,
+    /// Al Majlis light (docs/craft/MAJLIS_LOOK.md in Al Majlis), the default: its own colours and
+    /// shapes, whatever accent or colour scheme is chosen.
+    #[default]
+    MajlisLight,
+    /// Al Majlis dark.
+    MajlisDark,
 }
 
 impl Brightness {
-    pub const ALL: [Brightness; 4] = [Brightness::Dark, Brightness::MediumDark, Brightness::MediumLight, Brightness::Light];
+    pub const ALL: [Brightness; 6] = [
+        Brightness::MajlisLight,
+        Brightness::MajlisDark,
+        Brightness::Dark,
+        Brightness::MediumDark,
+        Brightness::MediumLight,
+        Brightness::Light,
+    ];
     pub fn label(self) -> &'static str {
         match self {
             Brightness::Dark => "Dark",
             Brightness::MediumDark => "Medium Dark",
             Brightness::MediumLight => "Medium Light",
             Brightness::Light => "Light",
+            Brightness::MajlisLight => "Al Majlis Light",
+            Brightness::MajlisDark => "Al Majlis Dark",
         }
     }
     pub fn id(self) -> &'static str {
@@ -30,7 +45,13 @@ impl Brightness {
             Brightness::MediumDark => "mediumDark",
             Brightness::MediumLight => "mediumLight",
             Brightness::Light => "light",
+            Brightness::MajlisLight => "majlisLight",
+            Brightness::MajlisDark => "majlisDark",
         }
+    }
+    /// One of the Al Majlis looks.
+    pub fn is_majlis(self) -> bool {
+        matches!(self, Brightness::MajlisLight | Brightness::MajlisDark)
     }
     pub fn parse(s: &str) -> Option<Self> {
         Self::ALL.into_iter().find(|b| b.id().eq_ignore_ascii_case(s) || b.label().eq_ignore_ascii_case(s))
@@ -135,7 +156,49 @@ pub struct Tokens {
     pub guide: Color32,
     pub measure_bg: Color32,
     pub button: Color32,
+    /// Corner radius of egui's own widgets (fields, combo boxes, egui buttons, scroll bars).
     pub radius: u8,
+    /// The Al Majlis look ([`Brightness::is_majlis`]): pill tabs and text buttons, hairlines.
+    pub majlis: bool,
+    /// Corner radius of tool wells and icon buttons.
+    pub tool_radius: u8,
+    /// Corner radius of the app's text buttons (primary, secondary, flat); 255 = pill.
+    pub button_radius: u8,
+    /// Corner radius of chips, crumbs, small toggles and tab tracks; 255 = pill.
+    pub pill_radius: u8,
+    /// Corner radius of the app's own fields (numbers, text, dropdowns).
+    pub field_radius: u8,
+    /// Corner radius of cards and panels ([`card`]).
+    pub card_radius: u8,
+    /// Corner radius of windows, dialogs and popovers.
+    pub window_radius: u8,
+    /// Corner radius of menus.
+    pub menu_radius: u8,
+    /// Raised surface (hover, header, field).
+    pub raised: Color32,
+    /// Pressed or active control.
+    pub pressed: Color32,
+    /// 1 px outline on a panel surface.
+    pub hairline: Color32,
+    /// 1 px outline on the window background.
+    pub hairline_canvas: Color32,
+    /// Muted text (inactive tabs).
+    pub text_muted: Color32,
+    /// Accent under the pointer or pressed (primary buttons).
+    pub accent_hover: Color32,
+    /// Small text in the accent colour.
+    pub accent_text: Color32,
+    /// Soft accent fill (selected tool, selected rows).
+    pub accent_soft: Color32,
+    /// Keyboard focus ring.
+    pub focus_ring: Color32,
+    /// Text and icons on an accent fill.
+    pub on_accent: Color32,
+    /// A slider's rail.
+    pub rail: Color32,
+    /// Success and information text.
+    pub ok: Color32,
+    pub info: Color32,
     /// Field values, button labels, link labels.
     pub text_strong: Color32,
     /// Panel tab strips, doc-tab bar, dock header.
@@ -201,6 +264,28 @@ impl Tokens {
             measure_bg: Color32::from_rgba_unmultiplied(24, 27, 34, 235),
             button: hex(0x282d37),
             radius: 4,
+            majlis: false,
+            tool_radius: 6,
+            button_radius: 6,
+            pill_radius: 3,
+            field_radius: 3,
+            card_radius: CARD_RADIUS,
+            window_radius: 10,
+            menu_radius: 8,
+            // The colours below follow the others outside Al Majlis (`Tokens::legacy_extras`).
+            raised: Color32::TRANSPARENT,
+            pressed: Color32::TRANSPARENT,
+            hairline: Color32::TRANSPARENT,
+            hairline_canvas: Color32::TRANSPARENT,
+            text_muted: Color32::TRANSPARENT,
+            accent_hover: Color32::TRANSPARENT,
+            accent_text: Color32::TRANSPARENT,
+            accent_soft: Color32::TRANSPARENT,
+            focus_ring: Color32::TRANSPARENT,
+            on_accent: Color32::WHITE,
+            rail: Color32::TRANSPARENT,
+            ok: hex(0x3fcf8e),
+            info: hex(0x5b96ff),
             text_strong: hex(0xffffff),
             tab_strip: hex(0x0f1116),
             button_border: hex(0x4a5363),
@@ -219,9 +304,10 @@ impl Tokens {
             axis_y: hex(0x45af63),
             axis_z: hex(0x378ef0),
         };
-        match b {
+        let legacy = match b {
+            Brightness::MajlisLight | Brightness::MajlisDark => return Self::majlis(b == Brightness::MajlisDark),
             Brightness::Dark => base,
-            // Charcoal, the default.
+            // Charcoal.
             Brightness::MediumDark => Tokens {
                 app_bar: hex(0x1b1f27),
                 panel: hex(0x272c36),
@@ -304,6 +390,107 @@ impl Tokens {
                 button_border: hex(0xa4abb8),
                 ..base
             },
+        };
+        legacy.legacy_extras()
+    }
+
+    /// The Al Majlis look (docs/craft/MAJLIS_LOOK.md in Al Majlis): the exact Al Majlis colours,
+    /// rounded shapes, pill tabs and text buttons, 1 px hairlines. The canvas around the artboards
+    /// keeps a neutral grey, so colours on the artboard are judged as before.
+    pub fn majlis(dark: bool) -> Self {
+        let hex = |s: u32| Color32::from_rgb((s >> 16) as u8, (s >> 8) as u8, s as u8);
+        // (light, dark)
+        let pick = |l: u32, d: u32| hex(if dark { d } else { l });
+        let canvas = pick(0xF2F1EE, 0x0D0D0F);
+        let surface = pick(0xFFFFFF, 0x17171A);
+        let raised = pick(0xF6F5F3, 0x202024);
+        let pressed = pick(0xE8E7E3, 0x2E2E34);
+        let hairline = pick(0xEEEEEE, 0x29292B);
+        let hairline_canvas = pick(0xE2E1DE, 0x202022);
+        let text = pick(0x141416, 0xF4F4F2);
+        let text_dim = pick(0x5B5B5C, 0xB2B2B1);
+        let text_muted = pick(0x7E7E7F, 0x909091);
+        let accent = hex(0x2563EB);
+        let accent_hover = pick(0x1D4ED8, 0x3B82F6);
+        let accent_text = pick(0x1D4ED8, 0x93C5FD);
+        let accent_soft = pick(0xE9EFFD, 0x19233B);
+        let focus_ring =
+            if dark { Color32::from_rgba_unmultiplied(0x60, 0xA5, 0xFA, 128) } else { Color32::from_rgba_unmultiplied(0x25, 0x63, 0xEB, 115) };
+        let measure_bg =
+            if dark { Color32::from_rgba_unmultiplied(0x17, 0x17, 0x1A, 235) } else { Color32::from_rgba_unmultiplied(0xFF, 0xFF, 0xFF, 235) };
+        let base = Self::for_brightness(if dark { Brightness::Dark } else { Brightness::Light });
+        Tokens {
+            dark,
+            majlis: true,
+            app_bar: canvas,
+            panel: surface,
+            panel_darker: raised,
+            input: raised,
+            input_border: hairline,
+            border: hairline_canvas,
+            divider: hairline,
+            text,
+            text_strong: text,
+            text_dim,
+            text_disabled: text_muted,
+            icon: text,
+            hover: raised,
+            tool_active: accent_soft,
+            accent,
+            accent_strong: accent,
+            row_selected: accent_soft,
+            // Neutral greys, as Classic's: the canvas around the artboards.
+            pasteboard: pick(0xDCDCDC, 0x1E1E1E),
+            ruler: raised,
+            ruler_tick: text_dim,
+            measure_bg,
+            button: raised,
+            tab_strip: raised,
+            button_border: hairline,
+            flyout_active: accent_text,
+            error: pick(0xB42318, 0xFDA29B),
+            warning: pick(0xB54708, 0xFEC84B),
+            ok: pick(0x067647, 0x75E0A7),
+            info: pick(0x175CD3, 0x84CAFF),
+            radius: 8,
+            tool_radius: 8,
+            button_radius: u8::MAX,
+            pill_radius: u8::MAX,
+            field_radius: 8,
+            card_radius: 12,
+            window_radius: 16,
+            menu_radius: 12,
+            raised,
+            pressed,
+            hairline,
+            hairline_canvas,
+            text_muted,
+            accent_hover,
+            accent_text,
+            accent_soft,
+            focus_ring,
+            on_accent: Color32::WHITE,
+            rail: pressed,
+            ..base
+        }
+    }
+
+    /// Outside Al Majlis, the Al Majlis-only colours follow the theme's own ones, so every widget
+    /// that reads them looks as it did before they were added.
+    fn legacy_extras(self) -> Self {
+        Tokens {
+            raised: self.hover,
+            pressed: self.tool_active,
+            hairline: self.divider,
+            hairline_canvas: self.border,
+            text_muted: self.text_dim,
+            accent_hover: self.accent,
+            accent_text: self.flyout_active,
+            accent_soft: self.tool_active,
+            focus_ring: self.accent,
+            on_accent: Color32::WHITE,
+            rail: self.button_border,
+            ..self
         }
     }
 
@@ -311,6 +498,9 @@ impl Tokens {
     /// pressed tool and blue-grey selected rows, on the Modern metrics (corners, sizes).
     pub fn classic(b: Brightness) -> Self {
         let hex = |s: u32| Color32::from_rgb((s >> 16) as u8, (s >> 8) as u8, s as u8);
+        if b.is_majlis() {
+            return Self::for_brightness(b);
+        }
         let base = Tokens {
             app_bar: hex(0x262626),
             panel: hex(0x323232),
@@ -339,8 +529,8 @@ impl Tokens {
             flyout_active: hex(0x54b2f7),
             ..Tokens::for_brightness(Brightness::Dark)
         };
-        match b {
-            Brightness::Dark => base,
+        let classic = match b {
+            Brightness::Dark | Brightness::MajlisLight | Brightness::MajlisDark => base,
             Brightness::MediumDark => Tokens {
                 // A shade below the panels, so the cards stand out from the window behind them.
                 app_bar: hex(0x464646),
@@ -419,11 +609,16 @@ impl Tokens {
                 flyout_active: hex(0x1473e6),
                 ..base
             },
-        }
+        };
+        classic.legacy_extras()
     }
 
-    /// The tokens for `b` in `scheme`; Modern takes `accent`, Classic has its own blue.
+    /// The tokens for `b` in `scheme`; Modern takes `accent`, Classic has its own blue. The Al
+    /// Majlis looks keep their own colours in either scheme.
     pub fn for_scheme(scheme: Scheme, b: Brightness, accent: Accent) -> Self {
+        if b.is_majlis() {
+            return Self::for_brightness(b);
+        }
         match scheme {
             Scheme::Modern => Self::for_brightness(b).with_accent(accent),
             Scheme::Classic => Self::classic(b),
@@ -433,6 +628,9 @@ impl Tokens {
     /// These tokens with `accent`: the accent, buttons filled with it, the active item in flyouts and
     /// selected rows (the panel tinted towards it).
     pub fn with_accent(self, accent: Accent) -> Self {
+        if self.majlis {
+            return self;
+        }
         let hex = |s: u32| Color32::from_rgb((s >> 16) as u8, (s >> 8) as u8, s as u8);
         let (a, strong) = accent.colors(self.dark);
         let (a, strong) = (hex(a), hex(strong));
@@ -448,6 +646,7 @@ impl Tokens {
             tool_active: tint(if self.dark { 0.3 } else { 0.24 }),
             ..self
         }
+        .legacy_extras()
     }
 
     pub fn get(ctx: &egui::Context) -> Tokens {
@@ -455,6 +654,15 @@ impl Tokens {
     }
     pub fn cr(&self) -> CornerRadius {
         CornerRadius::same(self.radius)
+    }
+    /// A pill (the radius clamps to half the shape's height) in the Al Majlis look, else `legacy`.
+    pub fn pill_or(&self, legacy: u8) -> CornerRadius {
+        self.corner(self.pill_radius, legacy)
+    }
+    /// The shape token `majlis` (one of the `*_radius` fields) in the Al Majlis look, else the
+    /// `legacy` corner the widget always had in the other looks.
+    pub fn corner(&self, majlis: u8, legacy: u8) -> CornerRadius {
+        CornerRadius::same(if self.majlis { majlis } else { legacy })
     }
 }
 
@@ -465,19 +673,20 @@ pub fn card<R>(ui: &mut egui::Ui, t: &Tokens, margin: egui::Margin, body: impl F
         .fill(t.app_bar)
         .inner_margin(margin)
         .show(ui, |ui| {
-            egui::Frame::NONE
-                .fill(t.panel)
-                .corner_radius(CARD_RADIUS)
-                .show(ui, |ui| {
-                    ui.set_min_size(ui.available_size());
-                    body(ui)
-                })
-                .inner
+            let card = egui::Frame::NONE.fill(t.panel).corner_radius(t.card_radius).show(ui, |ui| {
+                ui.set_min_size(ui.available_size());
+                body(ui)
+            });
+            // The Al Majlis card's hairline, drawn over the card so its content keeps its size.
+            if t.majlis {
+                ui.painter().rect_stroke(card.response.rect, t.card_radius, Stroke::new(1.0, t.hairline), egui::StrokeKind::Inside);
+            }
+            card.inner
         })
         .inner
 }
 
-/// The corner radius of [`card`]s and floating windows.
+/// The corner radius of [`card`]s outside the Al Majlis look ([`Tokens::card_radius`]).
 pub const CARD_RADIUS: u8 = 8;
 
 /// Selected text in the text fields `ui` draws from here on is in the strong text colour. egui
@@ -592,25 +801,45 @@ pub fn apply_with(ctx: &egui::Context, b: Brightness, accent: Accent, scheme: Sc
     v.window_fill = t.panel;
     v.extreme_bg_color = t.input;
     v.faint_bg_color = t.panel_darker;
-    v.window_stroke = Stroke::new(1.0, t.border);
-    v.window_corner_radius = CornerRadius::same(10);
-    v.menu_corner_radius = CornerRadius::same(8);
-    v.selection.bg_fill = t.accent.gamma_multiply(0.55);
-    v.selection.stroke = Stroke::new(1.0, t.accent);
-    v.hyperlink_color = t.accent;
+    v.window_stroke = Stroke::new(1.0, if t.majlis { t.hairline } else { t.border });
+    v.window_corner_radius = CornerRadius::same(t.window_radius);
+    v.menu_corner_radius = CornerRadius::same(t.menu_radius);
+    v.selection.bg_fill = if t.majlis { t.accent_soft } else { t.accent.gamma_multiply(0.55) };
+    // Al Majlis: a 1.5 pt accent focus outline on fields.
+    v.selection.stroke = Stroke::new(if t.majlis { 1.5 } else { 1.0 }, t.accent);
+    v.hyperlink_color = if t.majlis { t.accent_text } else { t.accent };
     v.override_text_color = Some(t.text);
-    v.popup_shadow = egui::epaint::Shadow { offset: [0, 4], blur: 14, spread: 0, color: Color32::from_black_alpha(if t.dark { 120 } else { 60 }) };
-    v.window_shadow = egui::epaint::Shadow { offset: [0, 8], blur: 28, spread: 0, color: Color32::from_black_alpha(if t.dark { 140 } else { 70 }) };
+    // Al Majlis: soft shadows, deeper in the dark look.
+    let (popup_alpha, window_alpha) = match (t.majlis, t.dark) {
+        (true, true) => (140, 160),
+        (true, false) => (28, 36),
+        (false, true) => (120, 140),
+        (false, false) => (60, 70),
+    };
+    v.popup_shadow = egui::epaint::Shadow { offset: [0, 4], blur: 14, spread: 0, color: Color32::from_black_alpha(popup_alpha) };
+    v.window_shadow = egui::epaint::Shadow { offset: [0, 8], blur: 28, spread: 0, color: Color32::from_black_alpha(window_alpha) };
     let w = &mut v.widgets;
-    craft_ui::theme::WidgetPalette { noninteractive: t.panel, inactive: t.button, hovered: t.hover, active: t.tool_active, open: t.hover }.apply_to(
-        w,
-        t.cr(),
-        Stroke::new(1.0, t.text),
-    );
-    w.noninteractive.bg_stroke = Stroke::new(1.0, t.divider);
-    w.inactive.bg_stroke = Stroke::NONE;
-    w.hovered.bg_stroke = Stroke::new(1.0, t.input_border);
-    w.active.bg_stroke = Stroke::new(1.0, t.accent);
+    if t.majlis {
+        // Secondary buttons: raised fill and a 1 px hairline, pressed under the pointer. Scroll
+        // bars and slider rails take the pressed colour (`bg_fill`), a bar under the pointer the
+        // muted text.
+        craft_ui::theme::WidgetPalette { noninteractive: t.panel, inactive: t.raised, hovered: t.pressed, active: t.pressed, open: t.pressed }
+            .apply_to(w, t.cr(), Stroke::new(1.0, t.text));
+        w.inactive.bg_fill = t.pressed;
+        w.hovered.bg_fill = t.text_muted;
+        w.noninteractive.bg_stroke = Stroke::new(1.0, t.hairline);
+        w.inactive.bg_stroke = Stroke::new(1.0, t.hairline);
+        w.hovered.bg_stroke = Stroke::new(1.0, t.hairline);
+        w.active.bg_stroke = Stroke::new(1.0, t.accent);
+        w.open.bg_stroke = Stroke::new(1.0, t.hairline);
+    } else {
+        craft_ui::theme::WidgetPalette { noninteractive: t.panel, inactive: t.button, hovered: t.hover, active: t.tool_active, open: t.hover }
+            .apply_to(w, t.cr(), Stroke::new(1.0, t.text));
+        w.noninteractive.bg_stroke = Stroke::new(1.0, t.divider);
+        w.inactive.bg_stroke = Stroke::NONE;
+        w.hovered.bg_stroke = Stroke::new(1.0, t.input_border);
+        w.active.bg_stroke = Stroke::new(1.0, t.accent);
+    }
     ctx.set_visuals(v);
     ctx.global_style_mut(|s| {
         s.spacing.item_spacing = egui::vec2(6.0, 5.0);
@@ -650,8 +879,10 @@ mod tests {
         for b in Brightness::ALL {
             for scheme in Scheme::ALL {
                 let t = Tokens::for_scheme(scheme, b, Accent::default());
-                let gap = (i32::from(t.button_border.r()) - i32::from(t.panel.r())).abs();
-                assert!(gap >= 24, "{scheme:?} {b:?}: rail {:?} on panel {:?}", t.button_border, t.panel);
+                let gap = (i32::from(t.rail.r()) - i32::from(t.panel.r())).abs();
+                // The Al Majlis track is its pressed colour (MAJLIS_LOOK.md), 23 levels off the panel.
+                let least = if b.is_majlis() { 20 } else { 24 };
+                assert!(gap >= least, "{scheme:?} {b:?}: rail {:?} on panel {:?}", t.rail, t.panel);
             }
         }
     }
@@ -660,13 +891,33 @@ mod tests {
     /// whatever accent is chosen.
     #[test]
     fn classic_scheme_keeps_the_corners_and_its_blue() {
-        for b in Brightness::ALL {
+        for b in Brightness::ALL.into_iter().filter(|b| !b.is_majlis()) {
             let (modern, classic) = (Tokens::for_brightness(b), Tokens::for_scheme(Scheme::Classic, b, Accent::Pink));
             assert_eq!(classic.radius, modern.radius);
             assert_eq!(classic.dark, modern.dark, "{b:?}");
             assert_ne!(classic.app_bar, classic.panel, "{b:?}: the cards need a frame");
             assert_eq!(classic.accent, Color32::from_rgb(0x37, 0x8e, 0xf0));
             assert_eq!(Scheme::parse(Scheme::Classic.id()), Some(Scheme::Classic));
+        }
+    }
+
+    /// The Al Majlis looks keep their exact colours whatever accent or scheme is chosen, and the
+    /// light one is the default.
+    #[test]
+    fn majlis_looks_keep_their_colours() {
+        let hex = |s: u32| Color32::from_rgb((s >> 16) as u8, (s >> 8) as u8, s as u8);
+        assert_eq!(Brightness::default(), Brightness::MajlisLight);
+        for (b, canvas, surface) in [(Brightness::MajlisLight, 0xF2F1EE, 0xFFFFFF), (Brightness::MajlisDark, 0x0D0D0F, 0x17171A)] {
+            for scheme in Scheme::ALL {
+                let t = Tokens::for_scheme(scheme, b, Accent::Pink);
+                assert!(t.majlis);
+                assert_eq!(t.dark, b == Brightness::MajlisDark);
+                assert_eq!(t.app_bar, hex(canvas));
+                assert_eq!(t.panel, hex(surface));
+                assert_eq!(t.accent, hex(0x2563EB));
+                assert_eq!((t.card_radius, t.window_radius, t.menu_radius, t.tool_radius), (12, 16, 12, 8));
+            }
+            assert_eq!(Brightness::parse(b.id()), Some(b));
         }
     }
 }

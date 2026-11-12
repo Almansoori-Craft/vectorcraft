@@ -1,5 +1,5 @@
 use super::{
-    Color32, CornerRadius, NodeKind, Pos2, Rect, Sense, Stroke, StrokeKind, TextKind, Tokens, Ui, Vec2, VectorcraftApp, Xf, json, pos2, vec2, widgets,
+    Color32, NodeKind, Pos2, Rect, Sense, Stroke, StrokeKind, TextKind, Tokens, Ui, Vec2, VectorcraftApp, Xf, json, pos2, vec2, widgets,
 };
 
 /// The Contextual Task Bar's area.
@@ -209,18 +209,28 @@ pub(super) fn task_bar(app: &mut VectorcraftApp, ui: &mut Ui, xf: &Xf) {
     let mut run: Option<(&str, serde_json::Value)> = None;
     let mut show_swatches = false;
     egui::Area::new(id).order(egui::Order::Middle).fixed_pos(pos).show(ui.ctx(), |ui| {
+        // Al Majlis: a floating card (window corner, hairline, soft shadow).
         egui::Frame::NONE
             .fill(t.panel)
-            .stroke(Stroke::new(1.0, t.tool_active))
-            .corner_radius(CornerRadius::same(5))
+            .stroke(Stroke::new(1.0, if t.majlis { t.hairline } else { t.tool_active }))
+            .corner_radius(t.corner(t.window_radius, 5))
             .inner_margin(egui::Margin::symmetric(8, 6))
-            .shadow(egui::epaint::Shadow { offset: [0, 3], blur: 10, spread: 0, color: Color32::from_black_alpha(70) })
+            .shadow(egui::epaint::Shadow {
+                offset: [0, 3],
+                blur: 10,
+                spread: 0,
+                color: Color32::from_black_alpha(if t.majlis && !t.dark { 30 } else { 70 }),
+            })
             .show(ui, |ui| {
                 ui.horizontal(|ui| {
                     ui.spacing_mut().item_spacing.x = 6.0;
                     let (g, grip) = ui.allocate_exact_size(vec2(4.0, 28.0), Sense::drag());
                     let active = grip.hovered() || grip.dragged();
-                    ui.painter().rect_filled(g.shrink2(vec2(0.5, 4.0)), CornerRadius::same(2), if active { t.text_dim } else { t.button_border });
+                    ui.painter().rect_filled(
+                        g.shrink2(vec2(0.5, 4.0)),
+                        t.pill_or(2),
+                        if active { t.text_dim } else if t.majlis { t.pressed } else { t.button_border },
+                    );
                     if grip.dragged() {
                         ui.ctx().set_cursor_icon(egui::CursorIcon::Grabbing);
                         moved = grip.drag_delta();
@@ -230,10 +240,12 @@ pub(super) fn task_bar(app: &mut VectorcraftApp, ui: &mut Ui, xf: &Xf) {
                     for (label, icon, cmd, params) in &items {
                         let galley = ui.painter().layout_no_wrap(label.to_string(), egui::FontId::proportional(13.0), t.text_strong);
                         let (r, resp) = ui.allocate_exact_size(vec2(galley.size().x + 38.0, 30.0), Sense::click());
+                        // Al Majlis: pill buttons with a hairline.
+                        let cr = t.corner(t.button_radius, 3);
                         if resp.hovered() {
-                            ui.painter().rect_filled(r, CornerRadius::same(3), t.hover);
+                            ui.painter().rect_filled(r, cr, t.hover);
                         }
-                        ui.painter().rect_stroke(r, CornerRadius::same(3), Stroke::new(1.0, t.button_border), StrokeKind::Inside);
+                        ui.painter().rect_stroke(r, cr, Stroke::new(1.0, t.button_border), StrokeKind::Inside);
                         crate::icons::paint(ui, icon, egui::Rect::from_min_size(r.min + vec2(8.0, 7.0), vec2(16.0, 16.0)), t.icon);
                         ui.painter().galley(pos2(r.left() + 30.0, r.center().y - galley.size().y / 2.0), galley, t.text_strong);
                         if resp.clicked() {

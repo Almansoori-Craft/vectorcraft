@@ -448,10 +448,20 @@ pub fn slider(ui: &mut Ui, slider: egui::Slider<'_>) -> Response {
     let t = Tokens::get(ui.ctx());
     ui.scope(|ui| {
         let v = ui.visuals_mut();
-        // The buttons' border shows against the panel in every brightness; the fields' border
-        // all but vanished on Medium Dark's panel (#1662).
-        v.widgets.inactive.bg_fill = t.button_border;
+        // The rail (`Tokens::rail`): the buttons' border, which shows against the panel in every
+        // brightness (the fields' border all but vanished on Medium Dark's panel, #1662), or the
+        // Al Majlis pressed colour.
+        v.widgets.inactive.bg_fill = t.rail;
         v.selection.bg_fill = t.accent;
+        if t.majlis {
+            // Al Majlis: a round knob in the accent. egui fills a resting knob with the rail's
+            // colour, so it gets an accent ring there, and the accent under the pointer.
+            v.widgets.inactive.fg_stroke = Stroke::new(1.5, t.accent);
+            for w in [&mut v.widgets.hovered, &mut v.widgets.active] {
+                w.bg_fill = t.accent;
+                w.fg_stroke = Stroke::new(1.0, t.accent);
+            }
+        }
         ui.add(slider.trailing_fill(true))
     })
     .inner
@@ -811,7 +821,7 @@ pub fn opt_field_named(ui: &mut Ui, id: impl std::hash::Hash, name: Option<&str>
     let framed = egui::Frame::NONE
         .fill(t.input)
         .stroke(Stroke::new(1.0, if editing { t.accent } else { t.input_border }))
-        .corner_radius(CornerRadius::same(2))
+        .corner_radius(t.corner(t.field_radius, 2))
         .inner_margin(egui::Margin::symmetric(4, 4))
         .show(ui, |ui| {
             ui.add(

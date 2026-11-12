@@ -702,7 +702,7 @@ fn shared_command_with(app: &mut VectorcraftApp, id: &str, params: &Value, legac
         DockCommand::NewWorkspace { name } => return app.run("window.workspace.new", json!({"name": name})),
         DockCommand::DeleteWorkspace { name } => return app.run("window.workspace.delete", json!({"name": name})),
         DockCommand::ResetWorkspace {} => return app.run("window.workspace.reset", json!({})),
-        DockCommand::Lock { .. } => return Err("Lock Workspace is not available in VectorCraft".into()),
+        DockCommand::Lock { .. } => return Err("Lock Workspace is not available in Al Majlis Vector".into()),
         DockCommand::Window { .. } => return Err("Move Panel to New Window is not available: floating panels stay in the main window".into()),
         _ => {}
     }
@@ -1202,10 +1202,12 @@ fn dock_style(ui: &egui::Ui) -> craft_ui::docking::DockStyle {
     style.tab_height = 33.0;
     style.background = t.panel;
     style.tab_background = t.tab_strip;
-    style.active_background = t.button;
+    // Al Majlis: the current tab is the panel's surface on the raised strip, the others muted text
+    // (craft-ui draws its dock tabs square: it has no corner setting).
+    style.active_background = if t.majlis { t.panel } else { t.button };
     style.text = t.text_strong;
-    style.inactive_text = t.text_dim;
-    style.border = egui::Stroke::new(1.0, t.border);
+    style.inactive_text = if t.majlis { t.text_muted } else { t.text_dim };
+    style.border = egui::Stroke::new(1.0, if t.majlis { t.hairline } else { t.border });
     style.accent = t.accent;
     style.blocked_dim = t.panel.gamma_multiply(0.6);
     // New docks at the docked area's free sides but no full-height column from the window's left

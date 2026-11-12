@@ -20,9 +20,13 @@ pub fn bottom_bar(ui: &mut Ui, add: impl FnOnce(&mut Ui)) {
 }
 
 /// A row of text tabs, the current one underlined in the accent colour (New Document's
-/// categories, Document Setup's sections). Returns the clicked tab's index.
+/// categories, Document Setup's sections); in the Al Majlis look, pill tabs in a rounded track
+/// ([`pill_tabs`]). Returns the clicked tab's index.
 pub fn tab_bar(ui: &mut Ui, tabs: &[&str], current: usize) -> Option<usize> {
     let t = Tokens::get(ui.ctx());
+    if t.majlis {
+        return pill_tabs(ui, &t, tabs, current);
+    }
     let mut clicked = None;
     ui.horizontal(|ui| {
         ui.spacing_mut().item_spacing.x = 18.0;
@@ -49,13 +53,53 @@ pub fn tab_bar(ui: &mut Ui, tabs: &[&str], current: usize) -> Option<usize> {
     clicked
 }
 
+/// Al Majlis tab strip: a track (raised, 1 pt hairline, radius half its height) holding pill tabs,
+/// the current one filled with the accent and white text, the others muted text that turns to the
+/// text colour under the pointer. As tall as the underlined row (30 pt).
+fn pill_tabs(ui: &mut Ui, t: &Tokens, tabs: &[&str], current: usize) -> Option<usize> {
+    let font = egui::FontId::proportional(13.0);
+    let galleys: Vec<_> = tabs.iter().map(|tab| ui.painter().layout_no_wrap(tl!(tab).to_string(), font.clone(), t.text)).collect();
+    let pad = 12.0;
+    let inset = 3.0;
+    let width: f32 = galleys.iter().map(|g| g.size().x + 2.0 * pad).sum::<f32>() + 2.0 * inset;
+    let (track, _) = ui.allocate_exact_size(vec2(width, 30.0), Sense::hover());
+    let pill = CornerRadius::same(t.pill_radius);
+    ui.painter().rect_filled(track, pill, t.raised);
+    ui.painter().rect_stroke(track, pill, Stroke::new(1.0, t.hairline), StrokeKind::Inside);
+    let mut x = track.left() + inset;
+    let mut clicked = None;
+    for (i, (tab, galley)) in tabs.iter().zip(galleys).enumerate() {
+        let sel = i == current;
+        let w = galley.size().x + 2.0 * pad;
+        let r = Rect::from_min_size(pos2(x, track.top() + inset), vec2(w, track.height() - 2.0 * inset));
+        let resp = ui.interact(r, ui.scope_id().with(("pill-tab", i)), Sense::click());
+        if sel {
+            ui.painter().rect_filled(r, pill, t.accent);
+        }
+        let color = if sel {
+            t.on_accent
+        } else if resp.hovered() {
+            t.text
+        } else {
+            t.text_muted
+        };
+        ui.painter().galley_with_override_text_color(pos2(r.center().x - galley.size().x / 2.0, r.center().y - galley.size().y / 2.0), galley, color);
+        resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), sel, tl!(tab)));
+        if resp.clicked() {
+            clicked = Some(i);
+        }
+        x += w;
+    }
+    clicked
+}
+
 /// A page-orientation toggle drawn in code: a portrait or landscape sheet with a folded corner,
 /// accent-filled when `selected`. Returns clicked.
 pub fn orientation_button(ui: &mut Ui, landscape: bool, selected: bool, tip: &str) -> bool {
     let t = Tokens::get(ui.ctx());
     let (rect, resp) = ui.allocate_exact_size(Vec2::splat(26.0), Sense::click());
     if resp.hovered() && !selected {
-        ui.painter().rect_filled(rect, CornerRadius::same(3), t.hover);
+        ui.painter().rect_filled(rect, t.corner(t.tool_radius, 3), t.hover);
     }
     let size = if landscape { vec2(16.0, 12.0) } else { vec2(12.0, 16.0) };
     let page = Rect::from_center_size(rect.center(), size);
@@ -86,7 +130,7 @@ pub fn layout_button(ui: &mut Ui, tiles: &[(u8, u8)], selected: bool, tip: &str)
     } else {
         Color32::TRANSPARENT
     };
-    ui.painter().rect_filled(rect, CornerRadius::same(3), bg);
+    ui.painter().rect_filled(rect, t.corner(t.tool_radius, 3), bg);
     let color = if !enabled {
         t.text_disabled
     } else if selected {
@@ -121,8 +165,9 @@ pub fn layout_button(ui: &mut Ui, tiles: &[(u8, u8)], selected: bool, tip: &str)
 pub(super) fn chevron_cell(ui: &mut Ui, h: f32) -> Response {
     let t = Tokens::get(ui.ctx());
     let (dr, dresp) = ui.allocate_exact_size(vec2(20.0, h), Sense::click());
-    ui.painter().rect_filled(dr, CornerRadius { nw: 0, sw: 0, ne: 2, se: 2 }, t.input);
-    ui.painter().rect_stroke(dr, CornerRadius { nw: 0, sw: 0, ne: 2, se: 2 }, Stroke::new(1.0, t.input_border), StrokeKind::Inside);
+    let r = t.corner(t.field_radius, 2).ne;
+    ui.painter().rect_filled(dr, CornerRadius { nw: 0, sw: 0, ne: r, se: r }, t.input);
+    ui.painter().rect_stroke(dr, CornerRadius { nw: 0, sw: 0, ne: r, se: r }, Stroke::new(1.0, t.input_border), StrokeKind::Inside);
     let c = if !ui.is_enabled() {
         t.text_disabled
     } else if dresp.hovered() {

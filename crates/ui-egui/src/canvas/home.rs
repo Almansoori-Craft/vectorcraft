@@ -22,10 +22,11 @@ pub(super) fn home(app: &mut VectorcraftApp, ui: &mut Ui, rect: egui::Rect) {
     });
 }
 
-/// The Home screen's column: welcome, New / Open, Recent Files, presets and community links.
+/// The Home screen's column: welcome, New / Open, Recent Files and presets (the community links
+/// are hidden in Al Majlis Vector).
 fn home_content(app: &mut VectorcraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
-    ui.label(egui::RichText::new(tl!("Welcome to VectorCraft")).font(theme::semibold(26.0)).color(t.text));
+    ui.label(egui::RichText::new(tl!("Welcome to Al Majlis Vector")).font(theme::semibold(26.0)).color(t.text));
     ui.add_space(4.0);
     ui.label(egui::RichText::new(tl!("Vector illustration — fast, open, scriptable.")).size(14.0).color(t.text_dim));
     ui.add_space(22.0);
@@ -53,10 +54,12 @@ fn home_content(app: &mut VectorcraftApp, ui: &mut Ui) {
             }
         }
     });
-    ui.add_space(28.0);
-    ui.label(egui::RichText::new(tl!("Community")).font(theme::semibold(14.0)).color(t.text));
-    ui.add_space(10.0);
-    crate::community::links(app, ui);
+    if crate::community::SHOWN {
+        ui.add_space(28.0);
+        ui.label(egui::RichText::new(tl!("Community")).font(theme::semibold(14.0)).color(t.text));
+        ui.add_space(10.0);
+        crate::community::links(app, ui);
+    }
 }
 
 /// The Home screen's Recent Files (#663): the first of File › Open Recent Files, each its name and

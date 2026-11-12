@@ -535,7 +535,7 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
         "",
         "{collapsed?: bool} collapse every expanded dock column to icons (true), expand the outer dock column, Properties | Layers | Libraries (false), or toggle the outer column (omitted), as the double arrow at the top of the dock does; returns the new state",
     ),
-    ("window.brightness", "UI Brightness", "", "{brightness: dark|mediumDark|mediumLight|light}"),
+    ("window.brightness", "UI Brightness", "", "{brightness: majlisLight|majlisDark|dark|mediumDark|mediumLight|light}"),
     (
         "window.workspace",
         "Workspace",
@@ -605,10 +605,10 @@ pub const UI_COMMANDS: &[(&str, &str, &str, &str)] = &[
         "",
         "{} opens the Save PDF dialog; with params = document.exportPdf options written to path (asked when missing; viewAfterSaving opens the file) → {path, bytes, warnings}",
     ),
-    ("help.about", "About VectorCraft", "", "{}"),
+    ("help.about", "About Al Majlis Vector", "", "{}"),
     ("help.checkForUpdates", "Check for Updates…", "", "{}"),
     ("help.commandPalette", "Search Commands…", "Cmd+Shift+/", "{}"),
-    ("app.quit", "Quit VectorCraft", "Cmd+Q", "{}"),
+    ("app.quit", "Quit Al Majlis Vector", "Cmd+Q", "{}"),
     (
         "ui.swatchOptions",
         "Swatch Options…",

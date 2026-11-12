@@ -836,7 +836,7 @@ impl Default for UiState {
     fn default() -> Self {
         Self {
             legacy_language: None,
-            brightness: Brightness::MediumDark,
+            brightness: Brightness::MajlisLight,
             dock_tab: DockTab::Properties,
             dock_tab_order: Vec::new(),
             dock_collapsed: false,
