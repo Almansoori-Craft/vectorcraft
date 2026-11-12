@@ -687,7 +687,7 @@ pub fn menu_tree_named(english_names: bool) -> Vec<(&'static str, Vec<Item>)> {
                 c("Search Commands…", "help.commandPalette"),
                 todos("Al Majlis Vector Help…", "F1"),
                 Sep,
-                c("Check for Updates…", "help.checkForUpdates"),
+                // Majlis Studio: no Check for Updates (`crate::updates_ui::HIDDEN`).
                 c("About Al Majlis Vector", "help.about"),
             ],
         ),

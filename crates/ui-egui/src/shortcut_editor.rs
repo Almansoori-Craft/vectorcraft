@@ -363,7 +363,7 @@ pub fn entries() -> &'static [Entry] {
             is_tool: false,
         }));
         for (id, label, sc, params) in menus::UI_COMMANDS {
-            if !seen.insert(id) || (sc.is_empty() && !params.starts_with("{}") && !params.starts_with("{path")) {
+            if crate::updates_ui::hidden(id) || !seen.insert(id) || (sc.is_empty() && !params.starts_with("{}") && !params.starts_with("{path")) {
                 continue;
             }
             v.push(Entry { key: id.to_string(), label: label.to_string(), group: id_group(id), is_tool: false });
