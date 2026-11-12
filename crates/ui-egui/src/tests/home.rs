@@ -220,7 +220,7 @@ fn a_recent_file_row_lights_up_and_opens_from_anywhere_on_it() {
     let texts = home_texts(&mut app, &ctx, vec![]);
     let rect_of = |s: &str| texts.iter().find(|(t, _)| t == s).map(|(_, r)| *r).unwrap();
     let (name, folder) = (rect_of("Gone.svg"), rect_of(&dir.to_string_lossy()));
-    let hover = crate::theme::Tokens::get(&ctx).hover;
+    let hover = { let t = crate::theme::Tokens::get(&ctx); if t.majlis { t.pressed } else { t.hover } };
     let lit = |rects: &[egui::Rect]| rects.iter().any(|r| r.contains(name.center()) && r.contains(folder.center()));
     let (rects, cursor) = home_fills(&mut app, &ctx, vec![], hover);
     assert!(!lit(&rects) && cursor != egui::CursorIcon::PointingHand, "no highlight without the pointer");

@@ -75,7 +75,8 @@ fn saved_scheme_accent_and_canvas_color_show_from_the_first_frame() {
         let (t, classic) = (Tokens::get(&ctx), Tokens::for_scheme(Scheme::Classic, app.ui.brightness, Accent::Pink));
         assert_eq!((t.accent, t.app_bar, t.panel), (classic.accent, classic.app_bar, classic.panel));
         assert_eq!(t.pasteboard, egui::Color32::WHITE);
-        assert_eq!(ctx.global_style().visuals.hyperlink_color, classic.accent);
+        // Al Majlis brightness: links use the readable accent text colour.
+        assert_eq!(ctx.global_style().visuals.hyperlink_color, if classic.majlis { classic.accent_text } else { classic.accent });
     }
 }
 
@@ -201,7 +202,7 @@ fn graphics_processor_preference_shows_and_persists() {
     out.shapes.iter().for_each(|c| texts(&c.shape, &mut shown));
     assert!(shown.iter().any(|t| t.starts_with("Graphics Processor")), "{shown:?}");
     assert!(shown.iter().any(|t| t == "Automatic"), "{shown:?}");
-    assert!(shown.iter().any(|t| t == "Applies the next time VectorCraft starts."), "{shown:?}");
+    assert!(shown.iter().any(|t| t == "Applies the next time Al Majlis Vector starts."), "{shown:?}");
     a.ui.dialog.as_mut().unwrap().fields.insert("gpuPreference".into(), json!("highPerformance"));
     assert!(!a.take_prefs_changed(), "nothing to write before OK");
     confirm(&mut a).unwrap();
@@ -236,7 +237,7 @@ fn system_title_bar_preference_shows_and_persists() {
     out.shapes.iter().for_each(|c| texts(&c.shape, &mut shown));
     let supported = cfg!(all(not(target_arch = "wasm32"), not(target_os = "macos")));
     assert_eq!(shown.iter().any(|t| t == "System Title Bar"), supported, "{shown:?}");
-    assert_eq!(shown.iter().any(|t| t == "Applies the next time VectorCraft starts."), supported, "{shown:?}");
+    assert_eq!(shown.iter().any(|t| t == "Applies the next time Al Majlis Vector starts."), supported, "{shown:?}");
     a.ui.dialog.as_mut().unwrap().fields.insert("systemTitleBar".into(), json!(true));
     confirm(&mut a).unwrap();
     assert!(a.session.prefs.system_title_bar);

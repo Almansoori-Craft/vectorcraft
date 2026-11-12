@@ -89,7 +89,7 @@ fn recent_row(ui: &mut Ui, path: &str) -> egui::Response {
     let (rect, resp) = ui.allocate_exact_size(vec2(ui.available_width(), 26.0), egui::Sense::click());
     if ui.is_rect_visible(rect) {
         if resp.hovered() {
-            ui.painter().rect_filled(rect, CornerRadius::same(4), t.hover);
+            ui.painter().rect_filled(rect, CornerRadius::same(4), if t.majlis { t.pressed } else { t.hover });
         }
         let icon = egui::Rect::from_center_size(egui::pos2(rect.left() + PAD + ICON / 2.0, rect.center().y), vec2(ICON, ICON));
         crate::icons::paint(ui, "history", icon, t.icon);
