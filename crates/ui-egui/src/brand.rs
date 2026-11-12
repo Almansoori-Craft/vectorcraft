@@ -1,5 +1,5 @@
-//! The app's name and mark: the app icon (the engraved dragon, `assets/app-icon/`, see its
-//! README; Al Majlis' own icon comes later). The PNG carries the icon's rounded corners; it is
+//! The app's name and mark: the app icon (the Al Majlis Studio icon, `assets/app-icon/`, see its
+//! README). The PNG carries the icon's rounded corners; it is
 //! decoded once per context into a mipmapped texture, so it stays crisp from the 18 pt app-bar
 //! mark to the About box. No ArtCraft logo or wordmark is drawn.
 
